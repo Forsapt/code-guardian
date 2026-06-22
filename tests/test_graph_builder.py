@@ -2,7 +2,9 @@ from code_guardian.graph.builder import build_graph
 from code_guardian.models import ScanResult, Severity, Vulnerability
 
 
-def _vuln(pkg: str, version: str, severity: Severity, target: str = "package-lock.json") -> Vulnerability:
+def _vuln(
+    pkg: str, version: str, severity: Severity, target: str = "package-lock.json"
+) -> Vulnerability:
     return Vulnerability(
         id=f"CVE-{pkg}",
         pkg_name=pkg,
@@ -54,9 +56,7 @@ def test_build_graph_max_severity_wins():
 
 
 def test_to_dot_returns_valid_dot_string():
-    result = ScanResult(
-        vulnerabilities=[_vuln("lodash", "4.17.20", Severity.critical)]
-    )
+    result = ScanResult(vulnerabilities=[_vuln("lodash", "4.17.20", Severity.critical)])
     graph = build_graph(result)
     dot = graph.to_dot()
     assert "digraph" in dot

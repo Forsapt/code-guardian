@@ -5,19 +5,17 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
-from rich.console import Console
-from rich.table import Table
 
 from code_guardian.adapters.cloner import GitCloner
 from code_guardian.adapters.github import GitHubClient
 from code_guardian.adapters.trivy import TrivyScanner
 from code_guardian.graph import GraphFormat
-from code_guardian.models import RepoOutcome, RepoPopularity, RepoSpec, Severity
+from code_guardian.models import RepoSpec
 from code_guardian.orchestrator import run
 from code_guardian.reporting import ReportFormat, get_reporter
+from code_guardian.reporting.summary import print_table
 
 app = typer.Typer(no_args_is_help=True)
-console = Console()
 
 
 def _setup_logging(level: str) -> None:
@@ -26,37 +24,6 @@ def _setup_logging(level: str) -> None:
         level=level.upper(),
         format="%(levelname)s %(name)s: %(message)s",
     )
-
-
-def _print_table(outcomes: list[RepoOutcome]) -> None:
-    table = Table(show_header=True)
-    table.add_column("Repository")
-    table.add_column("Stars", justify="right")
-    table.add_column("Forks", justify="right")
-    table.add_column("CRITICAL", justify="right", style="red")
-    table.add_column("HIGH", justify="right", style="yellow")
-    table.add_column("MEDIUM", justify="right")
-    table.add_column("LOW", justify="right")
-    table.add_column("Status")
-
-    for outcome in outcomes:
-        if not outcome.success:
-            table.add_row(outcome.repo.url, "-", "-", "-", "-", "-", "-", "[red]error[/red]")
-            continue
-        popularity = outcome.popularity or RepoPopularity.unknown()
-        counts = outcome.scan_result.severity_counts() if outcome.scan_result else {}
-        table.add_row(
-            outcome.repo.url,
-            str(popularity.stars),
-            str(popularity.forks),
-            str(counts.get(Severity.critical, 0)),
-            str(counts.get(Severity.high, 0)),
-            str(counts.get(Severity.medium, 0)),
-            str(counts.get(Severity.low, 0)),
-            "[green]ok[/green]",
-        )
-
-    console.print(table)
 
 
 @app.command()
@@ -98,7 +65,7 @@ async def _run(
         concurrency=concurrency,
         output_dir=output_dir,
     )
-    _print_table(outcomes)
+    print_table(outcomes)
 
 
 if __name__ == "__main__":
