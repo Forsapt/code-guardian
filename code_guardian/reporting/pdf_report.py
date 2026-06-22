@@ -7,7 +7,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from code_guardian.models import RepoOutcome, Severity
-from code_guardian.reporting import report_name
+from code_guardian.utils import report_name
 
 log = logging.getLogger(__name__)
 
@@ -38,16 +38,23 @@ class PDFReportFile:
 
         scan = outcome.scan_result
         counts = scan.severity_counts() if scan else {}
-        stats_data = [["Severity", "Count"]] + [
-            [s.value, str(counts.get(s, 0))] for s in Severity
-        ]
+        stats_data = [["Severity", "Count"]] + [[s.value, str(counts.get(s, 0))] for s in Severity]
         stats_table = Table(stats_data)
-        stats_table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-            ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f5f5f5")]),
-        ]))
+        stats_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+                    (
+                        "ROWBACKGROUNDS",
+                        (0, 1),
+                        (-1, -1),
+                        [colors.white, colors.HexColor("#f5f5f5")],
+                    ),
+                ]
+            )
+        )
         story.append(stats_table)
         story.append(Spacer(1, 12))
 

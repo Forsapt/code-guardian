@@ -2,6 +2,7 @@ import asyncio
 import logging
 from pathlib import Path
 
+from code_guardian.graph import GraphFormat
 from code_guardian.models import RepoOutcome, RepoSpec
 from code_guardian.pipeline import Cloner, GitHub, Scanner, process_repository
 from code_guardian.reporting import ReportWriter
@@ -16,6 +17,7 @@ async def run(
     github: GitHub,
     scanner: Scanner,
     reporter: ReportWriter,
+    graph_format: GraphFormat,
     concurrency: int,
     output_dir: Path,
 ) -> list[RepoOutcome]:
@@ -30,6 +32,7 @@ async def run(
                 github=github,
                 scanner=scanner,
                 reporter=reporter,
+                graph_format=graph_format,
                 output_dir=output_dir,
             )
 

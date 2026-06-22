@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "graphviz>=0.21",
     "httpx>=0.28.1",
+    "reportlab>=5.0.0",
     "typer>=0.26.7",
 ]
 

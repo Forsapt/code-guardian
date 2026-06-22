@@ -56,6 +56,7 @@ def _parse(path: Path) -> ScanResult:
     data = json.loads(path.read_text())
     vulns: list[Vulnerability] = []
     for result in data.get("Results") or []:
+        target = result.get("Target", "")
         for v in result.get("Vulnerabilities") or []:
             vulns.append(
                 Vulnerability(
@@ -65,6 +66,7 @@ def _parse(path: Path) -> ScanResult:
                     fixed_version=v.get("FixedVersion", ""),
                     severity=Severity(v.get("Severity", "UNKNOWN")),
                     title=v.get("Title", ""),
+                    target=target,
                 )
             )
     return ScanResult(vulnerabilities=vulns)

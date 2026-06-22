@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from code_guardian.errors import CloneError, ScanError
+from code_guardian.graph import GraphFormat
 from code_guardian.models import RepoOutcome, RepoPopularity, RepoSpec, ScanResult
 from code_guardian.pipeline import process_repository
 
@@ -50,6 +51,7 @@ async def test_remote_repo_success(output_dir: Path):
         github=FakeGitHub(),
         scanner=FakeScanner(),
         reporter=FakeReporter(),
+        graph_format=GraphFormat.dot,
         output_dir=output_dir,
     )
     assert outcome.success
@@ -65,6 +67,7 @@ async def test_clone_failure_returns_failed_outcome(output_dir: Path):
         github=FakeGitHub(),
         scanner=FakeScanner(),
         reporter=FakeReporter(),
+        graph_format=GraphFormat.dot,
         output_dir=output_dir,
     )
     assert not outcome.success
@@ -79,6 +82,7 @@ async def test_scan_failure_returns_failed_outcome(output_dir: Path):
         github=FakeGitHub(),
         scanner=FailingScanner(),
         reporter=FakeReporter(),
+        graph_format=GraphFormat.dot,
         output_dir=output_dir,
     )
     assert not outcome.success
@@ -93,6 +97,7 @@ async def test_local_repo_skips_clone(output_dir: Path):
         github=FakeGitHub(),
         scanner=FakeScanner(),
         reporter=FakeReporter(),
+        graph_format=GraphFormat.dot,
         output_dir=output_dir,
     )
     assert outcome.success

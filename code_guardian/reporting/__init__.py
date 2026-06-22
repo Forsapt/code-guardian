@@ -14,13 +14,6 @@ class ReportWriter(Protocol):
     def write(self, outcome: RepoOutcome, output_dir: Path) -> Path: ...
 
 
-def report_name(outcome: RepoOutcome) -> str:
-    repo = outcome.repo
-    if repo.owner and repo.name:
-        return f"{repo.owner}-{repo.name}"
-    return Path(repo.url).name
-
-
 def get_reporter(fmt: ReportFormat) -> ReportWriter:
     from code_guardian.reporting.json_report import JSONReportFile
     from code_guardian.reporting.pdf_report import PDFReportFile

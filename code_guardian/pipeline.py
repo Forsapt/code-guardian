@@ -7,8 +7,12 @@ from pathlib import Path
 from typing import Protocol
 
 from code_guardian.errors import CloneError, ScanError
+from code_guardian.graph import GraphFormat
+from code_guardian.graph.builder import build_graph
+from code_guardian.graph.render import render
 from code_guardian.models import RepoOutcome, RepoPopularity, RepoSpec, ScanResult
 from code_guardian.reporting import ReportWriter
+from code_guardian.utils import report_name
 
 log = logging.getLogger(__name__)
 
@@ -41,6 +45,7 @@ async def process_repository(
     github: GitHub,
     scanner: Scanner,
     reporter: ReportWriter,
+    graph_format: GraphFormat,
     output_dir: Path,
 ) -> RepoOutcome:
     log.info("start %s", repo.url)
@@ -52,6 +57,7 @@ async def process_repository(
             github=github,
             scanner=scanner,
             reporter=reporter,
+            graph_format=graph_format,
             output_dir=output_dir,
         )
     else:
@@ -67,6 +73,7 @@ async def process_repository(
                 github=github,
                 scanner=scanner,
                 reporter=reporter,
+                graph_format=graph_format,
                 output_dir=output_dir,
             )
 
@@ -84,6 +91,7 @@ async def _process(
     github: GitHub,
     scanner: Scanner,
     reporter: ReportWriter,
+    graph_format: GraphFormat,
     output_dir: Path,
 ) -> RepoOutcome:
     if repo.owner and repo.name:
@@ -103,4 +111,6 @@ async def _process(
         scan_result=scan_result,
     )
     outcome.report_path = reporter.write(outcome, output_dir)
+    graph = build_graph(scan_result)
+    outcome.graph_path = render(graph, output_dir, report_name(outcome), graph_format)
     return outcome

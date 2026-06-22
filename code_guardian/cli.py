@@ -11,6 +11,7 @@ from rich.table import Table
 from code_guardian.adapters.cloner import GitCloner
 from code_guardian.adapters.github import GitHubClient
 from code_guardian.adapters.trivy import TrivyScanner
+from code_guardian.graph import GraphFormat
 from code_guardian.models import RepoOutcome, RepoPopularity, RepoSpec, Severity
 from code_guardian.orchestrator import run
 from code_guardian.reporting import ReportFormat, get_reporter
@@ -64,11 +65,18 @@ def main(
     output_dir: Annotated[Path, typer.Option("-o", "--output-dir")] = Path("reports"),
     concurrency: Annotated[int, typer.Option("-c", "--concurrency", min=1)] = 4,
     report_format: Annotated[ReportFormat, typer.Option("--report-format")] = ReportFormat.json,
+    graph_format: Annotated[GraphFormat, typer.Option("--graph-format")] = GraphFormat.svg,
     log_level: Annotated[str, typer.Option("--log-level")] = "info",
 ) -> None:
     _setup_logging(log_level)
     asyncio.run(
-        _run(repos, concurrency=concurrency, output_dir=output_dir, report_format=report_format)
+        _run(
+            repos,
+            concurrency=concurrency,
+            output_dir=output_dir,
+            report_format=report_format,
+            graph_format=graph_format,
+        )
     )
 
 
@@ -78,6 +86,7 @@ async def _run(
     concurrency: int,
     output_dir: Path,
     report_format: ReportFormat,
+    graph_format: GraphFormat,
 ) -> None:
     outcomes = await run(
         [RepoSpec.from_url(url) for url in urls],
@@ -85,6 +94,7 @@ async def _run(
         github=GitHubClient(),
         scanner=TrivyScanner(),
         reporter=get_reporter(report_format),
+        graph_format=graph_format,
         concurrency=concurrency,
         output_dir=output_dir,
     )

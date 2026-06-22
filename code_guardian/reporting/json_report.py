@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 
 from code_guardian.models import RepoOutcome, Severity
-from code_guardian.reporting import report_name
+from code_guardian.utils import report_name
 
 log = logging.getLogger(__name__)
 
