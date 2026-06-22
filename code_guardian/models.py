@@ -1,6 +1,7 @@
 import re
 from dataclasses import dataclass, field
 from enum import StrEnum
+from pathlib import Path
 
 
 class Severity(StrEnum):
@@ -73,4 +74,5 @@ class RepoOutcome:
     success: bool
     popularity: RepoPopularity | None = None
     scan_result: ScanResult | None = None
+    report_path: Path | None = None
     error: BaseException | None = None

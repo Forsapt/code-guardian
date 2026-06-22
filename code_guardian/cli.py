@@ -13,6 +13,7 @@ from code_guardian.adapters.github import GitHubClient
 from code_guardian.adapters.trivy import TrivyScanner
 from code_guardian.models import RepoOutcome, RepoPopularity, RepoSpec, Severity
 from code_guardian.orchestrator import run
+from code_guardian.reporting import ReportFormat, get_reporter
 
 app = typer.Typer(no_args_is_help=True)
 console = Console()
@@ -62,19 +63,30 @@ def main(
     repos: Annotated[list[str], typer.Argument(help="Git URLs or local paths to scan")],
     output_dir: Annotated[Path, typer.Option("-o", "--output-dir")] = Path("reports"),
     concurrency: Annotated[int, typer.Option("-c", "--concurrency", min=1)] = 4,
+    report_format: Annotated[ReportFormat, typer.Option("--report-format")] = ReportFormat.json,
     log_level: Annotated[str, typer.Option("--log-level")] = "info",
 ) -> None:
     _setup_logging(log_level)
-    asyncio.run(_run(repos, concurrency=concurrency))
+    asyncio.run(
+        _run(repos, concurrency=concurrency, output_dir=output_dir, report_format=report_format)
+    )
 
 
-async def _run(urls: list[str], *, concurrency: int) -> None:
+async def _run(
+    urls: list[str],
+    *,
+    concurrency: int,
+    output_dir: Path,
+    report_format: ReportFormat,
+) -> None:
     outcomes = await run(
         [RepoSpec.from_url(url) for url in urls],
         cloner=GitCloner(),
         github=GitHubClient(),
         scanner=TrivyScanner(),
+        reporter=get_reporter(report_format),
         concurrency=concurrency,
+        output_dir=output_dir,
     )
     _print_table(outcomes)
 

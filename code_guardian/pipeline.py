@@ -8,6 +8,7 @@ from typing import Protocol
 
 from code_guardian.errors import CloneError, ScanError
 from code_guardian.models import RepoOutcome, RepoPopularity, RepoSpec, ScanResult
+from code_guardian.reporting import ReportWriter
 
 log = logging.getLogger(__name__)
 
@@ -39,6 +40,8 @@ async def process_repository(
     cloner: Cloner,
     github: GitHub,
     scanner: Scanner,
+    reporter: ReportWriter,
+    output_dir: Path,
 ) -> RepoOutcome:
     log.info("start %s", repo.url)
 
@@ -48,6 +51,8 @@ async def process_repository(
             path=Path(repo.url),
             github=github,
             scanner=scanner,
+            reporter=reporter,
+            output_dir=output_dir,
         )
     else:
         async with workspace() as ws:
@@ -61,6 +66,8 @@ async def process_repository(
                 path=ws,
                 github=github,
                 scanner=scanner,
+                reporter=reporter,
+                output_dir=output_dir,
             )
 
     if outcome.success:
@@ -76,6 +83,8 @@ async def _process(
     path: Path,
     github: GitHub,
     scanner: Scanner,
+    reporter: ReportWriter,
+    output_dir: Path,
 ) -> RepoOutcome:
     if repo.owner and repo.name:
         popularity = await github.get_popularity(repo.owner, repo.name)
@@ -87,9 +96,11 @@ async def _process(
     except ScanError as exc:
         return RepoOutcome(repo=repo, success=False, error=exc)
 
-    return RepoOutcome(
+    outcome = RepoOutcome(
         repo=repo,
         success=True,
         popularity=popularity,
         scan_result=scan_result,
     )
+    outcome.report_path = reporter.write(outcome, output_dir)
+    return outcome
