@@ -1,13 +1,27 @@
+import logging
 import shutil
 import tempfile
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Protocol
 
-from code_guardian.adapters.cloner import GitCloner
-from code_guardian.adapters.github import GitHubClient
-from code_guardian.errors import CloneError
-from code_guardian.models import RepoOutcome, RepoPopularity, RepoSpec
+from code_guardian.errors import CloneError, ScanError
+from code_guardian.models import RepoOutcome, RepoPopularity, RepoSpec, ScanResult
+
+log = logging.getLogger(__name__)
+
+
+class Cloner(Protocol):
+    async def clone(self, url: str, dest: Path) -> None: ...
+
+
+class GitHub(Protocol):
+    async def get_popularity(self, owner: str, repo: str) -> RepoPopularity: ...
+
+
+class Scanner(Protocol):
+    async def scan(self, path: Path) -> ScanResult: ...
 
 
 @asynccontextmanager
@@ -20,22 +34,62 @@ async def workspace() -> AsyncGenerator[Path, None]:
 
 
 async def process_repository(
-    repo: RepoSpec, *, cloner: GitCloner, github: GitHubClient
+    repo: RepoSpec,
+    *,
+    cloner: Cloner,
+    github: GitHub,
+    scanner: Scanner,
 ) -> RepoOutcome:
+    log.info("start %s", repo.url)
+
     if repo.is_local:
-        return await _process(repo, path=Path(repo.url), github=github)
+        outcome = await _process(
+            repo,
+            path=Path(repo.url),
+            github=github,
+            scanner=scanner,
+        )
+    else:
+        async with workspace() as ws:
+            try:
+                await cloner.clone(repo.url, ws)
+            except CloneError as exc:
+                log.error("clone failed %s: %s", repo.url, exc)
+                return RepoOutcome(repo=repo, success=False, error=exc)
+            outcome = await _process(
+                repo,
+                path=ws,
+                github=github,
+                scanner=scanner,
+            )
 
-    async with workspace() as ws:
-        try:
-            await cloner.clone(repo.url, ws)
-        except CloneError as exc:
-            return RepoOutcome(repo=repo, success=False, error=exc)
-        return await _process(repo, path=ws, github=github)
+    if outcome.success:
+        log.info("done %s", repo.url)
+    else:
+        log.error("failed %s: %s", repo.url, outcome.error)
+    return outcome
 
 
-async def _process(repo: RepoSpec, *, path: Path, github: GitHubClient) -> RepoOutcome:
+async def _process(
+    repo: RepoSpec,
+    *,
+    path: Path,
+    github: GitHub,
+    scanner: Scanner,
+) -> RepoOutcome:
     if repo.owner and repo.name:
         popularity = await github.get_popularity(repo.owner, repo.name)
     else:
         popularity = RepoPopularity.unknown()
-    return RepoOutcome(repo=repo, success=True, popularity=popularity)
+
+    try:
+        scan_result = await scanner.scan(path)
+    except ScanError as exc:
+        return RepoOutcome(repo=repo, success=False, error=exc)
+
+    return RepoOutcome(
+        repo=repo,
+        success=True,
+        popularity=popularity,
+        scan_result=scan_result,
+    )
