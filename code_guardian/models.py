@@ -28,11 +28,13 @@ class RepoPopularity:
     forks: int
 
     @classmethod
-    def unknown(cls) -> 'RepoPopularity':
+    def unknown(cls) -> "RepoPopularity":
         return cls(stars=0, forks=0)
 
 
 @dataclass(slots=True)
 class RepoOutcome:
     repo: RepoSpec
-    popularity: RepoPopularity
+    success: bool
+    popularity: RepoPopularity | None = None
+    error: BaseException | None = None
