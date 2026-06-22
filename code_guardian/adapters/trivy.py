@@ -16,10 +16,14 @@ class TrivyScanner:
         with tempfile.TemporaryDirectory() as tmpdir:
             output_file = Path(tmpdir) / "output.json"
             proc = await asyncio.create_subprocess_exec(
-                "trivy", "fs",
-                "--format", "json",
-                "--output", str(output_file),
-                "--scanners", "vuln",
+                "trivy",
+                "fs",
+                "--format",
+                "json",
+                "--output",
+                str(output_file),
+                "--scanners",
+                "vuln",
                 "--quiet",
                 str(path),
                 stdout=asyncio.subprocess.DEVNULL,
@@ -37,7 +41,8 @@ class TrivyScanner:
     async def available(self) -> bool:
         try:
             proc = await asyncio.create_subprocess_exec(
-                "trivy", "--version",
+                "trivy",
+                "--version",
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
             )

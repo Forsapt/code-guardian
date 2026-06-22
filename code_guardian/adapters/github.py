@@ -17,7 +17,11 @@ class GitHubClient:
 
     async def get_popularity(self, owner: str, repo: str) -> RepoPopularity:
         try:
-            async with httpx.AsyncClient(headers=self._headers, timeout=10) as client:
+            async with httpx.AsyncClient(
+                headers=self._headers,
+                timeout=10,
+                follow_redirects=True,
+            ) as client:
                 resp = await client.get(f"{_BASE}/repos/{owner}/{repo}")
                 resp.raise_for_status()
                 data = resp.json()

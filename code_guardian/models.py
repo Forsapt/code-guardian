@@ -32,7 +32,7 @@ class ScanResult:
         return counts
 
 
-_GITHUB_RE = re.compile(r"(?:https?://github\.com/|git@github\.com:)([^/]+)/([^/\.]+)")
+_GITHUB_RE = re.compile(r"(?:https?://github\.com/|git@github\.com:)([^/]+)/([^/]+)")
 
 
 @dataclass(slots=True)
@@ -52,7 +52,7 @@ class RepoSpec:
             return cls(
                 url=raw,
                 owner=m.group(1),
-                name=m.group(2),
+                name=m.group(2).removesuffix(".git"),
             )
         return cls(url=raw)
 
