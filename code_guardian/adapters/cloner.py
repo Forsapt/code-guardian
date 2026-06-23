@@ -12,6 +12,7 @@ class GitCloner:
         log.info("cloning %s", url)
         proc = await asyncio.create_subprocess_exec(
             "git",
+            "-c", "credential.helper=",
             "clone",
             "--depth=1",
             url,

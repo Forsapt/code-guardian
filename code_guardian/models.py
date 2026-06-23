@@ -4,8 +4,6 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Literal
 
-_SEVERITY_ORDER = ["UNKNOWN", "LOW", "MEDIUM", "HIGH", "CRITICAL"]
-
 _DOT_COLORS: dict[str, str] = {
     "CRITICAL": "#dd3333",
     "HIGH": "#e67e22",
